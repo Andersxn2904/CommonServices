@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36414.22 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AuthServices", "AuthServices", "{42D6740D-2912-4DAE-8D8F-CFA11C597A90}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{40037E91-4F78-4DBA-8BF8-E65AC4B37879}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService", "AuthService\AuthService.csproj", "{AF5639B6-F689-4F93-9388-AC090EE7E687}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EmailService", "EmailService", "{F30442EC-4F0F-42F1-829D-25ABFF457CC6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{01A12E8E-D3BD-475E-8F85-F661231C6642}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailService", "EmailService\EmailService.csproj", "{8EE101B5-86C1-4BF3-B275-FF2079A2CE05}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AF5639B6-F689-4F93-9388-AC090EE7E687}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF5639B6-F689-4F93-9388-AC090EE7E687}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF5639B6-F689-4F93-9388-AC090EE7E687}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF5639B6-F689-4F93-9388-AC090EE7E687}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EE101B5-86C1-4BF3-B275-FF2079A2CE05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EE101B5-86C1-4BF3-B275-FF2079A2CE05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EE101B5-86C1-4BF3-B275-FF2079A2CE05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EE101B5-86C1-4BF3-B275-FF2079A2CE05}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{42D6740D-2912-4DAE-8D8F-CFA11C597A90} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{40037E91-4F78-4DBA-8BF8-E65AC4B37879} = {42D6740D-2912-4DAE-8D8F-CFA11C597A90}
+		{AF5639B6-F689-4F93-9388-AC090EE7E687} = {40037E91-4F78-4DBA-8BF8-E65AC4B37879}
+		{F30442EC-4F0F-42F1-829D-25ABFF457CC6} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{01A12E8E-D3BD-475E-8F85-F661231C6642} = {F30442EC-4F0F-42F1-829D-25ABFF457CC6}
+		{8EE101B5-86C1-4BF3-B275-FF2079A2CE05} = {01A12E8E-D3BD-475E-8F85-F661231C6642}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {198C1EDA-D959-458E-B348-3AE983B85383}
+	EndGlobalSection
+EndGlobal
