@@ -76,8 +76,24 @@ services:
       - kauthen-net
     restart: unless-stopped
 
+  seq:
+    image: datalust/seq:latest
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=${SEQ_ADMIN_PASSWORD:-Admin1234!}
+    ports:
+      - "8003:80"
+      - "5341:5341"
+    volumes:
+      - seq_data:/data
+    networks:
+      - kauthen-net
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  seq_data:
 
 networks:
   kauthen-net:
