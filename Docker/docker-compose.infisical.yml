@@ -18,6 +18,13 @@ services:
       - DB_CONNECTION_URI=postgres://infisical:${INFISICAL_DB_PASSWORD}@infisical-postgres:5432/infisical
       - REDIS_URL=redis://infisical-redis:6379
       - SITE_URL=http://localhost:8888
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_NAME=${SMTP_NAME:-Infisical}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
     restart: unless-stopped
     networks:
       - infisical-net
