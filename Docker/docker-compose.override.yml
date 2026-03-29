@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────
+# DEV OVERRIDES — cargado automáticamente por Docker Compose
+# No requiere flag -f, solo: docker compose up -d
+# ─────────────────────────────────────────────────────────
+
+services:
+
+  auth-service:
+    container_name: auth-service
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+  email-service:
+    container_name: email-service
+    ports:
+      - "8081:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+  postgres:
+    container_name: auth-postgres
+    ports:
+      - "5434:5432"
+
+  seq:
+    image: datalust/seq:latest
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=${SEQ_ADMIN_PASSWORD:-Admin1234!}
+    ports:
+      - "8003:80"
+      - "5341:5341"
+    volumes:
+      - seq_data:/data
+    networks:
+      - kauthen-net
+    restart: unless-stopped
+
+volumes:
+  seq_data:

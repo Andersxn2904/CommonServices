@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────
+# PLATFORM — servicios compartidos por todos los stacks
+# Seq como observabilidad centralizada
+#
+# Dev local:
+#   docker compose -f docker-compose.platform.yml up -d
+#
+# Server (/srv/platform/):
+#   SEQ_DATA_PATH=/mnt/data/platform/seq docker compose -f docker-compose.platform.yml up -d
+#
+# Crea la red platform-net que usan los stacks de apps
+# ─────────────────────────────────────────────────────────
+
+name: platform
+
+services:
+
+  seq:
+    image: datalust/seq:latest
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=${SEQ_ADMIN_PASSWORD}
+    ports:
+      - "${SEQ_UI_PORT:-8003}:80"
+      - "5341:5341"
+    volumes:
+      - ${SEQ_DATA_PATH:-seq_data}:/data
+    networks:
+      - platform-net
+    restart: unless-stopped
+
+volumes:
+  seq_data:
+
+networks:
+  platform-net:
+    name: platform-net

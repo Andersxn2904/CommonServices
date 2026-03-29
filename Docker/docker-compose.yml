@@ -1,16 +1,23 @@
 name: common-services
 
+# ─────────────────────────────────────────────────────────
+# BASE — común a todos los entornos
+# Dev:    docker compose up -d
+#         (carga docker-compose.override.yml automáticamente)
+# Server: docker compose -f docker-compose.yml -f docker-compose.server.yml up -d
+# ─────────────────────────────────────────────────────────
+
 services:
+
   auth-service:
     build:
       context: ..
       dockerfile: Docker/auth.Dockerfile
-    container_name: auth-service
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
-      # Infisical — deshabilitar para pruebas locales (INFISICAL_ENABLED=false)
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      # Infisical
       - Infisical__Enabled=${INFISICAL_ENABLED:-false}
       - Infisical__SiteUrl=${INFISICAL_SITE_URL:-}
       - Infisical__ClientId=${INFISICAL_CLIENT_ID:-}
@@ -18,20 +25,27 @@ services:
       - Infisical__ProjectId=${INFISICAL_PROJECT_ID:-}
       - Infisical__Environment=${INFISICAL_ENVIRONMENT:-prod}
       - Infisical__SecretPath=/
-      # Secretos directos — solo usados cuando Infisical está deshabilitado
+      # Secrets fallback (cuando Infisical está deshabilitado)
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=authservice;Username=postgres;Password=${POSTGRES_PASSWORD}
       - Jwt__SecretKey=${JWT_SECRET_KEY}
-      # Configuración no sensible
       - Jwt__Issuer=kauthen
       - Jwt__Audience=platform
-      - Jwt__AccessTokenExpirationMinutes=15
-      - Jwt__RefreshTokenExpirationDays=7
-      - Lockout__MaxFailedAttempts=5
-      - Lockout__LockoutDurationMinutes=15
+      - Jwt__AccessTokenExpirationMinutes=${JWT_ACCESS_EXPIRATION:-15}
+      - Jwt__RefreshTokenExpirationDays=${JWT_REFRESH_EXPIRATION:-7}
+      - Lockout__MaxFailedAttempts=${LOCKOUT_MAX_ATTEMPTS:-5}
+      - Lockout__LockoutDurationMinutes=${LOCKOUT_DURATION:-15}
       - EmailService__BaseUrl=http://email-service:8080
+      - App__BaseUrl=${APP_BASE_URL:-http://localhost:8080}
+      - Seq__ServerUrl=${SEQ_URL:-http://seq:5341}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - kauthen-net
     restart: unless-stopped
@@ -40,33 +54,36 @@ services:
     build:
       context: ..
       dockerfile: Docker/email.Dockerfile
-    container_name: email-service
-    ports:
-      - "8081:8080"
+    expose:
+      - "8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
       - Infisical__Enabled=${EMAIL_INFISICAL_ENABLED:-false}
       - Infisical__SiteUrl=${INFISICAL_SITE_URL:-}
       - Infisical__ClientId=${EMAIL_INFISICAL_CLIENT_ID:-}
       - Infisical__ClientSecret=${EMAIL_INFISICAL_CLIENT_SECRET:-}
       - Infisical__ProjectId=${EMAIL_INFISICAL_PROJECT_ID:-}
-      - Infisical__Environment=${EMAIL_INFISICAL_ENVIRONMENT:-dev}
+      - Infisical__Environment=${EMAIL_INFISICAL_ENVIRONMENT:-prod}
       - Infisical__SecretPath=/
+      - Seq__ServerUrl=${SEQ_URL:-http://seq:5341}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - kauthen-net
     restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
-    container_name: auth-postgres
     environment:
       - POSTGRES_DB=authservice
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5434:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -76,24 +93,8 @@ services:
       - kauthen-net
     restart: unless-stopped
 
-  seq:
-    image: datalust/seq:latest
-    container_name: seq
-    environment:
-      - ACCEPT_EULA=Y
-      - SEQ_FIRSTRUN_ADMINPASSWORD=${SEQ_ADMIN_PASSWORD:-Admin1234!}
-    ports:
-      - "8003:80"
-      - "5341:5341"
-    volumes:
-      - seq_data:/data
-    networks:
-      - kauthen-net
-    restart: unless-stopped
-
 volumes:
   postgres_data:
-  seq_data:
 
 networks:
   kauthen-net:
