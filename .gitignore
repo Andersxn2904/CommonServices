@@ -3,6 +3,21 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# ==========================================
+# SECRETS & ENVIRONMENT FILES — never commit
+# ==========================================
+*.env
+*.env.*
+!*.env.example
+Docker/secrets/
+Docker/.env.infisical
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+
+# Claude Code local settings
+.claude/
+
 # User-specific files
 *.rsuser
 *.suo

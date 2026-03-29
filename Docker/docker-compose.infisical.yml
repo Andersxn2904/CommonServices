@@ -1,0 +1,62 @@
+name: infisical
+
+services:
+  infisical:
+    image: infisical/infisical:latest
+    container_name: infisical
+    depends_on:
+      infisical-postgres:
+        condition: service_healthy
+      infisical-redis:
+        condition: service_started
+    ports:
+      - "8888:8080"
+    environment:
+      - NODE_ENV=production
+      - ENCRYPTION_KEY=${INFISICAL_ENCRYPTION_KEY}
+      - AUTH_SECRET=${INFISICAL_AUTH_SECRET}
+      - DB_CONNECTION_URI=postgres://infisical:${INFISICAL_DB_PASSWORD}@infisical-postgres:5432/infisical
+      - REDIS_URL=redis://infisical-redis:6379
+      - SITE_URL=http://localhost:8888
+    restart: unless-stopped
+    networks:
+      - infisical-net
+      - kauthen-net
+
+  infisical-postgres:
+    image: postgres:16-alpine
+    container_name: infisical-postgres
+    environment:
+      - POSTGRES_DB=infisical
+      - POSTGRES_USER=infisical
+      - POSTGRES_PASSWORD=${INFISICAL_DB_PASSWORD}
+    volumes:
+      - infisical_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U infisical"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - infisical-net
+
+  infisical-redis:
+    image: redis:7-alpine
+    container_name: infisical-redis
+    volumes:
+      - infisical_redis_data:/data
+    restart: unless-stopped
+    networks:
+      - infisical-net
+
+volumes:
+  infisical_postgres_data:
+  infisical_redis_data:
+
+networks:
+  infisical-net:
+    name: infisical-net
+  kauthen-net:
+    external: true
+    name: kauthen-net
