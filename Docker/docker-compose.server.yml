@@ -6,7 +6,7 @@
 #
 # Requisitos previos en el server:
 #   mkdir -p /mnt/data/apps/common-services/postgres
-#   docker network create platform-net  (creado por docker-compose.platform.yml)
+#   docker compose -f docker-compose.platform.yml up -d  ← crea platform-net
 # ─────────────────────────────────────────────────────────
 
 services:
@@ -18,21 +18,21 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
     networks:
       - kauthen-net
-      - platform-net
-    restart: always
+      - platform-net   # solo para alcanzar Seq en la red de plataforma
+    restart: unless-stopped
 
   email-service:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
     networks:
       - kauthen-net
-      - platform-net
-    restart: always
+      - platform-net   # solo para alcanzar Seq en la red de plataforma
+    restart: unless-stopped
 
   postgres:
     volumes:
       - /mnt/data/apps/common-services/postgres:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
 
 networks:
   platform-net:
