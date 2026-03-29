@@ -5,6 +5,8 @@ name: common-services
 # Dev:    docker compose up -d
 #         (carga docker-compose.override.yml automáticamente)
 # Server: docker compose -f docker-compose.yml -f docker-compose.server.yml up -d
+#
+# Secrets: todos vienen del .env — sin Infisical por ahora.
 # ─────────────────────────────────────────────────────────
 
 services:
@@ -17,25 +19,21 @@ services:
       - "8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
-      # Infisical
-      - Infisical__Enabled=${INFISICAL_ENABLED:-false}
-      - Infisical__SiteUrl=${INFISICAL_SITE_URL:-}
-      - Infisical__ClientId=${INFISICAL_CLIENT_ID:-}
-      - Infisical__ClientSecret=${INFISICAL_CLIENT_SECRET:-}
-      - Infisical__ProjectId=${INFISICAL_PROJECT_ID:-}
-      - Infisical__Environment=${INFISICAL_ENVIRONMENT:-prod}
-      - Infisical__SecretPath=/
-      # Secrets fallback (cuando Infisical está deshabilitado)
+      # Base de datos
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=authservice;Username=postgres;Password=${POSTGRES_PASSWORD}
+      # JWT
       - Jwt__SecretKey=${JWT_SECRET_KEY}
       - Jwt__Issuer=kauthen
       - Jwt__Audience=platform
       - Jwt__AccessTokenExpirationMinutes=${JWT_ACCESS_EXPIRATION:-15}
       - Jwt__RefreshTokenExpirationDays=${JWT_REFRESH_EXPIRATION:-7}
+      # Seguridad
       - Lockout__MaxFailedAttempts=${LOCKOUT_MAX_ATTEMPTS:-5}
       - Lockout__LockoutDurationMinutes=${LOCKOUT_DURATION:-15}
+      # Servicios internos
       - EmailService__BaseUrl=http://email-service:8080
       - App__BaseUrl=${APP_BASE_URL:-http://localhost:8080}
+      # Logs (opcional — si Seq no está disponible, solo va a consola)
       - Seq__ServerUrl=${SEQ_URL:-http://seq:5341}
     depends_on:
       postgres:
@@ -58,13 +56,14 @@ services:
       - "8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
-      - Infisical__Enabled=${EMAIL_INFISICAL_ENABLED:-false}
-      - Infisical__SiteUrl=${INFISICAL_SITE_URL:-}
-      - Infisical__ClientId=${EMAIL_INFISICAL_CLIENT_ID:-}
-      - Infisical__ClientSecret=${EMAIL_INFISICAL_CLIENT_SECRET:-}
-      - Infisical__ProjectId=${EMAIL_INFISICAL_PROJECT_ID:-}
-      - Infisical__Environment=${EMAIL_INFISICAL_ENVIRONMENT:-prod}
-      - Infisical__SecretPath=/
+      # SMTP
+      - EmailConfiguration__FromName=${EMAIL_FROM_NAME}
+      - EmailConfiguration__FromAddress=${EMAIL_FROM_ADDRESS}
+      - EmailConfiguration__SmtpServer=${EMAIL_SMTP_SERVER:-smtp.gmail.com}
+      - EmailConfiguration__Port=${EMAIL_SMTP_PORT:-587}
+      - EmailConfiguration__UserName=${EMAIL_SMTP_USERNAME}
+      - EmailConfiguration__Password=${EMAIL_SMTP_PASSWORD}
+      # Logs (opcional)
       - Seq__ServerUrl=${SEQ_URL:-http://seq:5341}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health > /dev/null 2>&1 || exit 1"]

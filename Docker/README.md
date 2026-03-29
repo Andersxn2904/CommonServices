@@ -1,6 +1,6 @@
 # CommonServices — Guía de Despliegue
 
-Stack de servicios comunes: autenticación centralizada (Kauthen), email relay, gestión de secretos (Infisical) y observabilidad (Seq).
+Stack de servicios comunes: autenticación centralizada (Kauthen), email relay y observabilidad (Seq).
 
 ---
 
@@ -10,7 +10,7 @@ Stack de servicios comunes: autenticación centralizada (Kauthen), email relay, 
 - [Requisitos](#requisitos)
 - [Implementación en PC local (dev)](#implementación-en-pc-local-dev)
 - [Despliegue en server homelab](#despliegue-en-server-homelab)
-- [Gestión de secretos con Infisical](#gestión-de-secretos-con-infisical)
+- [Gestión de secretos](#gestión-de-secretos)
 - [Logs con Seq](#logs-con-seq)
 - [Backups](#backups)
 - [Comandos útiles](#comandos-útiles)
@@ -21,26 +21,28 @@ Stack de servicios comunes: autenticación centralizada (Kauthen), email relay, 
 ## Arquitectura
 
 ```
-┌─────────────────────── kauthen-net ──────────────────────────┐
-│                                                               │
-│   auth-service :8080   ──→   postgres :5432                  │
-│        │                                                      │
-│        └──────────────→   email-service :8080                │
-│                                 │                             │
-└─────────────────────────────────┼─────────────────────────────┘
-                                  ↓
-                          Gmail SMTP :587
+┌─────────────────────────── kauthen-net ──────────────────────────────┐
+│                                                                       │
+│   auth-service :8080 ──→ postgres :5432                              │
+│        │                                                              │
+│        └─────────────→ email-service :8080 ──→ Gmail SMTP :587       │
+│                                                                       │
+│   seq :5341 (ingestion) :80 (UI)  [solo en dev]                      │
+│                                                                       │
+└───────────────────────────────────────────────────────────────────────┘
 
-┌─────────────── platform-net (server) ───────────────────────┐
-│   seq :5341 (ingestion)  :80 (UI)                           │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────── infisical-net ───────────────────────┐
-│   infisical :8080   infisical-postgres   infisical-redis     │
-│       │                                                      │
-│       └── también conectado a kauthen-net                   │
-└─────────────────────────────────────────────────────────────┘
+Puertos expuestos al host:
+  dev:    auth :8080  email :8081  postgres :5434  seq :8003
+  server: auth :8080  (resto solo interno)
 ```
+
+### Estrategia de secrets
+
+| Entorno | Fuente              | Cuándo migrar                         |
+|---------|---------------------|---------------------------------------|
+| Dev     | `.env` local        | Siempre                               |
+| Server  | `.env` en el server | Ahora y hasta tener múltiples stacks  |
+| Futuro  | Infisical           | Cuando gestionar secretos a mano escale mal |
 
 ### Puertos expuestos
 
@@ -308,43 +310,49 @@ cd Docker
 
 ---
 
-## Gestión de secretos con Infisical
+## Gestión de secretos
 
-### Estrategia
+### Estrategia actual: archivo `.env`
 
-| Entorno | Fuente de secrets          |
-|---------|---------------------------|
-| Dev     | `.env` con valores locales |
-| Server  | Infisical (prod)          |
-
-**Regla**: Si un secret está en Infisical, no debe estar en `.env`.
-El `.env` en server solo contiene las credenciales para conectarse a Infisical.
-
-### Configurar secrets en Infisical
-
-1. Ir a `http://localhost:8888` (o la URL del server)
-2. Proyecto `Kauthen` → ambiente `prod`
-3. Subir el archivo de secrets con drag & drop o `+ Add Secret`
-
-Secrets mínimos para `Kauthen` (AuthService):
+Todos los secrets van en el archivo `.env` del server. Simple, directo y sin dependencias externas.
 
 ```
-ConnectionStrings__Default=Host=postgres;Port=5432;...
-Jwt__SecretKey=...
-App__BaseUrl=https://kauthen.tudominio.com
-EmailService__BaseUrl=http://email-service:8080
+/srv/apps/common-services/Docker/.env
 ```
 
-Secrets mínimos para `EmailService`:
+Permisos correctos:
+```bash
+chmod 600 .env
+chown andersxn:andersxn .env
+```
 
+### Variables requeridas
+
+Usar `.env.server.example` como plantilla:
+```bash
+cp .env.server.example .env
+nano .env
 ```
-EmailConfiguration__SmtpServer=smtp.gmail.com
-EmailConfiguration__Port=587
-EmailConfiguration__UserName=...
-EmailConfiguration__Password=...
-EmailConfiguration__FromAddress=...
-EmailConfiguration__FromName=...
+
+Variables obligatorias:
+
+| Variable | Descripción |
+|---|---|
+| `POSTGRES_PASSWORD` | Password de PostgreSQL |
+| `JWT_SECRET_KEY` | Clave de firma JWT (min 32 chars) |
+| `APP_BASE_URL` | URL pública del servicio |
+| `EMAIL_SMTP_PASSWORD` | App Password de Gmail |
+| `EMAIL_SMTP_USERNAME` | Cuenta de Gmail |
+| `EMAIL_FROM_ADDRESS` | Dirección remitente |
+
+Generar un JWT secret seguro:
+```bash
+openssl rand -base64 32
 ```
+
+### Migración futura a Infisical
+
+Cuando tengas múltiples servicios y gestionar el `.env` a mano se vuelva incómodo, Infisical ya está disponible como stack separado en `docker-compose.infisical.yml`. La integración en el código ya está implementada — solo hay que habilitarla.
 
 ---
 

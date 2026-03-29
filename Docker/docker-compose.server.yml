@@ -4,9 +4,8 @@
 # Uso:
 #   docker compose -f docker-compose.yml -f docker-compose.server.yml up -d
 #
-# Requisitos previos en el server:
+# Requisito previo:
 #   mkdir -p /mnt/data/apps/common-services/postgres
-#   docker compose -f docker-compose.platform.yml up -d  ← crea platform-net
 # ─────────────────────────────────────────────────────────
 
 services:
@@ -16,25 +15,13 @@ services:
       - "${AUTH_PORT:-8080}:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-    networks:
-      - kauthen-net
-      - platform-net   # solo para alcanzar Seq en la red de plataforma
-    restart: unless-stopped
 
   email-service:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-    networks:
-      - kauthen-net
-      - platform-net   # solo para alcanzar Seq en la red de plataforma
-    restart: unless-stopped
+    # Sin ports — solo accesible internamente por auth-service
 
   postgres:
     volumes:
       - /mnt/data/apps/common-services/postgres:/var/lib/postgresql/data
-    restart: unless-stopped
-
-networks:
-  platform-net:
-    external: true
-    name: platform-net
+    # Sin ports — solo accesible internamente por auth-service
