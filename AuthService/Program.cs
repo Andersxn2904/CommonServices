@@ -87,6 +87,23 @@ try
             };
         });
 
+    // CORS
+    // Si AllowedOrigins está vacío o contiene "*" → permite cualquier origen.
+    // Compatible con JWT Bearer (Authorization header) — no usa cookies.
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? [];
+
+    builder.Services.AddCors(opts =>
+        opts.AddDefaultPolicy(policy =>
+        {
+            var anyOrigin = allowedOrigins.Length == 0 || allowedOrigins.Contains("*");
+            if (anyOrigin)
+                policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+            else
+                policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+        }));
+
     builder.Services.AddAuthorization();
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
@@ -133,6 +150,7 @@ try
     }
 
     app.UseSerilogRequestLogging();
+    app.UseCors();
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();

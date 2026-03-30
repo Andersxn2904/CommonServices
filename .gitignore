@@ -376,3 +376,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Secrets — nunca al repo
+Docker/.env
+Docker/.env.server.generated
+Docker/secrets/
