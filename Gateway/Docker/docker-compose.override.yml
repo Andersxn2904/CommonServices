@@ -1,0 +1,16 @@
+# ─────────────────────────────────────────────────────────
+# DEV OVERRIDES — cargado automáticamente
+#
+# En dev el gateway escucha en :8000 para no pisar el :80 del host.
+# El auth-service sigue accesible en :8080 directamente para Swagger.
+# El gateway enruta a http://localhost:8080 (appsettings.Development.json)
+# ─────────────────────────────────────────────────────────
+
+services:
+
+  gateway:
+    container_name: gateway
+    ports:
+      - "8000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development

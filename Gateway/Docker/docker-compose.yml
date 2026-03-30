@@ -1,0 +1,40 @@
+name: gateway
+
+# ─────────────────────────────────────────────────────────
+# GATEWAY — API Gateway con YARP (.NET 8)
+# Punto de entrada único para todos los servicios.
+#
+# Dev:    docker compose up -d
+# Server: docker compose -f docker-compose.yml -f docker-compose.server.yml up -d
+#
+# Red compartida:
+#   Los servicios backend deben unirse a proxy-net
+#   para que el gateway pueda alcanzarlos.
+# ─────────────────────────────────────────────────────────
+
+services:
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: Docker/gateway.Dockerfile
+    expose:
+      - "8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - Seq__ServerUrl=${SEQ_URL:-http://seq:5341}
+      # Sobrescribir destinos si difieren del default en appsettings.json
+      # - ReverseProxy__Clusters__kauthen__Destinations__primary__Address=http://auth-service:8080
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - proxy-net
+    restart: unless-stopped
+
+networks:
+  proxy-net:
+    name: proxy-net

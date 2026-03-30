@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "GatewayService": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:62552;http://localhost:62553"
+    }
+  }
+}

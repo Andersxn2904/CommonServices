@@ -4,17 +4,20 @@
 # Uso:
 #   docker compose -f docker-compose.yml -f docker-compose.server.yml up -d
 #
-# Requisito previo:
+# Requisitos previos:
 #   mkdir -p /mnt/data/apps/common-services/postgres
+#   Gateway stack corriendo (proxy-net debe existir)
 # ─────────────────────────────────────────────────────────
 
 services:
 
   auth-service:
-    ports:
-      - "${AUTH_PORT:-8080}:8080"
+    # Sin ports — tráfico entra exclusivamente por el Gateway (proxy-net)
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+    networks:
+      - kauthen-net
+      - proxy-net
 
   email-service:
     environment:
@@ -24,4 +27,9 @@ services:
   postgres:
     volumes:
       - /mnt/data/apps/common-services/postgres:/var/lib/postgresql/data
-    # Sin ports — solo accesible internamente por auth-service
+    # Sin ports — solo accesible internamente
+
+networks:
+  proxy-net:
+    external: true
+    name: proxy-net
