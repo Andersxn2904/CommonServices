@@ -14,3 +14,6 @@ services:
       - "8000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      # En Docker los servicios se comunican por nombre de contenedor, no por localhost.
+      # appsettings.Development.json usa localhost:8080 para correr el gateway fuera de Docker (dotnet run).
+      - ReverseProxy__Clusters__kauthen__Destinations__primary__Address=http://auth-service:8080

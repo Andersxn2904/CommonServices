@@ -143,11 +143,14 @@ try
         dbContext.Database.Migrate();
     }
 
-    if (app.Environment.IsDevelopment())
+    // Swagger disponible siempre — accesible vía gateway en /kauthen/swagger
+    app.UseSwagger(c =>
+        c.RouteTemplate = "kauthen/swagger/{documentName}/swagger.json");
+    app.UseSwaggerUI(c =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+        c.SwaggerEndpoint("/kauthen/swagger/v1/swagger.json", "Kauthen API v1");
+        c.RoutePrefix = "kauthen/swagger";
+    });
 
     app.UseSerilogRequestLogging();
     app.UseCors();

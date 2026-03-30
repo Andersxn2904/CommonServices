@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Serilog;
+using Yarp.ReverseProxy.Transforms;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -21,10 +22,39 @@ try
             cfg.WriteTo.Seq(seqUrl);
     });
 
+    // ── CORS ─────────────────────────────────────────────────
+    // El gateway es el único punto de entrada público — maneja CORS aquí.
+    // Los servicios internos no necesitan configurar CORS.
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? [];
+
+    builder.Services.AddCors(opts =>
+        opts.AddDefaultPolicy(policy =>
+        {
+            if (allowedOrigins.Length == 0 || allowedOrigins.Contains("*"))
+                policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+            else
+                policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+        }));
+
     // ── YARP ─────────────────────────────────────────────────
+    // Los transforms eliminan los headers CORS del upstream para evitar duplicados.
     builder.Services
         .AddReverseProxy()
-        .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+        .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+        .AddTransforms(ctx =>
+        {
+            ctx.AddResponseTransform(async responseCtx =>
+            {
+                responseCtx.ProxyResponse?.Headers.Remove("Access-Control-Allow-Origin");
+                responseCtx.ProxyResponse?.Headers.Remove("Access-Control-Allow-Methods");
+                responseCtx.ProxyResponse?.Headers.Remove("Access-Control-Allow-Headers");
+                responseCtx.ProxyResponse?.Headers.Remove("Access-Control-Allow-Credentials");
+                responseCtx.ProxyResponse?.Headers.Remove("Access-Control-Expose-Headers");
+                await Task.CompletedTask;
+            });
+        });
 
     // ── Rate limiting ─────────────────────────────────────────
     builder.Services.AddRateLimiter(options =>
@@ -58,6 +88,7 @@ try
     var app = builder.Build();
 
     app.UseSerilogRequestLogging();
+    app.UseCors();
     app.UseRateLimiter();
     app.MapHealthChecks("/health");
     app.MapReverseProxy();

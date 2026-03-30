@@ -46,6 +46,7 @@ services:
       start_period: 40s
     networks:
       - kauthen-net
+      - proxy-net
     restart: unless-stopped
 
   email-service:
@@ -98,3 +99,6 @@ volumes:
 networks:
   kauthen-net:
     name: kauthen-net
+  proxy-net:
+    name: proxy-net
+    external: true
